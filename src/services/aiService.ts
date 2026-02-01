@@ -1,45 +1,70 @@
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
 const API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
-const API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent';
+
+// Rate limiting variables
+let lastRequestTime = 0;
+const MIN_REQUEST_INTERVAL = 6000; // 6 seconds between requests
 
 export const getAIResponse = async (prompt: string, image?: string): Promise<string> => {
     try {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const parts: any[] = [{ text: prompt + " (Answer concisely as an agricultural expert, keep it under 50 words)" }];
+        // Rate limiting
+        const now = Date.now();
+        const timeSinceLastRequest = now - lastRequestTime;
+        if (timeSinceLastRequest < MIN_REQUEST_INTERVAL) {
+            await new Promise(resolve =>
+                setTimeout(resolve, MIN_REQUEST_INTERVAL - timeSinceLastRequest)
+            );
+        }
+        lastRequestTime = Date.now();
 
+        // Initialize the AI client
+        const genAI = new GoogleGenerativeAI(API_KEY);
+
+        // Use a currently supported model
+        const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+
+        // Prepare the content
         if (image) {
-            // clean base64 string if needed
+            // With image
             const base64Image = image.split(',')[1] || image;
-            parts.push({
-                inline_data: {
-                    mime_type: "image/jpeg",
+
+            const imagePart = {
+                inlineData: {
+                    mimeType: "image/jpeg",
                     data: base64Image
                 }
-            });
+            };
+
+            const textPart = prompt + " (Answer concisely as an agricultural expert, keep it under 50 words)";
+
+            const result = await model.generateContent([textPart, imagePart]);
+            const response = await result.response;
+            return response.text();
+        } else {
+            // Text only
+            const result = await model.generateContent(
+                prompt + " (Answer concisely as an agricultural expert, keep it under 50 words)"
+            );
+            const response = await result.response;
+            return response.text();
         }
-
-        const response = await fetch(`${API_URL}?key=${API_KEY}`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                contents: [{
-                    parts: parts
-                }]
-            })
-        });
-
-        if (!response.ok) {
-            const errorData = await response.json();
-            console.error('AI API Error:', errorData);
-            throw new Error('Failed to fetch AI response');
-        }
-
-        const data = await response.json();
-        return data.candidates[0].content.parts[0].text;
-    } catch (error) {
+    } catch (error: unknown) {
         console.error('Error calling AI service:', error);
+
+        // Handle specific error types
+        if (error && typeof error === 'object') {
+            const errorMessage = 'message' in error ? String(error.message) : '';
+
+            if (errorMessage.includes('429') || errorMessage.includes('quota')) {
+                return "You're sending requests too quickly. Please wait a moment and try again.";
+            } else if (errorMessage.includes('403') || errorMessage.includes('API key')) {
+                return "API key error. Please check your API configuration.";
+            } else if (errorMessage.includes('404') || errorMessage.includes('not found')) {
+                return "AI model not found. The model may have been deprecated.";
+            }
+        }
+
         return "I'm having trouble connecting to the agricultural database right now. Please try again later.";
     }
 };
