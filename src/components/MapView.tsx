@@ -54,6 +54,7 @@ const MapView = () => {
   const [coords, setCoords] = useState<any[]>([]);
   const [indexInfo, setIndices] = useState<any>(null);
   const [healthStatus, setHealthStatus] = useState<string>("");
+  const [cropHealth, setCropHealth] = useState<any>(null);
   const [healthyRange, setHealthyRange] = useState<string>("");
   const [loading, setLoading] = useState(false);
   const [cropType, setCropType] = useState<string>("wheat");
@@ -570,6 +571,7 @@ const MapView = () => {
       setIndices(data.indices);
       setHealthStatus(data.health_status);
       setHealthyRange(data.healthy_range);
+      setCropHealth(data.crop_health || null);
 
       // 🎨 COLOR LOGIC
       const health = data.health_status || "Unknown";
@@ -628,15 +630,6 @@ const MapView = () => {
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
               <button
-                onClick={() => setDrawingEnabled(!drawingEnabled)}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${drawingEnabled
-                  ? 'bg-green-500 text-white'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                  }`}
-              >
-                {drawingEnabled ? t('map.tools.enabled') : t('map.tools.enable')}
-              </button>
-              <button
                 onClick={analyzeFarm}
                 className="px-4 py-2 rounded-lg text-sm font-medium bg-purple-600 text-white hover:bg-purple-700"
               >
@@ -662,14 +655,8 @@ const MapView = () => {
                 ref={mapRef}
               >
                 <LayersControl position="topright">
-                  <LayersControl.BaseLayer checked name="OpenStreetMap">
-                    <TileLayer
-                      attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                      url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                    />
-                  </LayersControl.BaseLayer>
 
-                  <LayersControl.BaseLayer name="Satellite (Esri)">
+                  <LayersControl.BaseLayer checked name="Satellite (Esri)">
                     <TileLayer
                       attribution='&copy; <a href="https://www.esri.com/">Esri</a>'
                       url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
@@ -714,21 +701,17 @@ const MapView = () => {
                     onEdited={handleEdited}
                     onDeleted={handleDeleted}
                     draw={{
-                      rectangle: drawingEnabled,
-                      polygon: drawingEnabled,
-                      circle: drawingEnabled,
+                      polygon: {
+                        allowIntersection: false,
+                      },
+                      circle: false,
+                      rectangle: false,
                       polyline: false,
                       marker: false,
                       circlemarker: false
                     }}
                     edit={{
-                      edit: {
-                        selectedPathOptions: {
-                          maintainColor: true,
-                          opacity: 0.3
-                        }
-                      },
-                      remove: {}
+                      edit: false,
                     }}
                   />
                 </FeatureGroup>
@@ -810,6 +793,73 @@ const MapView = () => {
               )}
             </div>
           )}
+
+          {/* ── ML Health Prediction ─────────────────────────────────── */}
+            {cropHealth && (
+              <div
+                style={{
+                  marginTop: "15px",
+                  background: cropHealth.prediction.includes("Healthy") ? "#e8f5e9" : "#ffebee",
+                  padding: "15px",
+                  borderRadius: "8px",
+                  boxShadow: "0 0 5px rgba(0,0,0,0.08)",
+                  border: `2px solid ${cropHealth.prediction.includes("Healthy") ? "#4caf50" : "#f44336"}`,
+                }}
+              >
+                <h3 style={{ margin: "0 0 12px 0" }}>ML Health Prediction</h3>
+
+                {/* Prediction + confidence */}
+                <div style={{ display: "flex", gap: "20px", flexWrap: "wrap", alignItems: "center", marginBottom: "14px" }}>
+                  <div>
+                    <span style={{ fontSize: "0.85rem", color: "#555" }}>Prediction</span>
+                    <p style={{ fontSize: "1.4rem", fontWeight: "bold", margin: "2px 0 0" }}>
+                      {cropHealth.prediction}
+                    </p>
+                  </div>
+                  <div>
+                    <span style={{ fontSize: "0.85rem", color: "#555" }}>Confidence</span>
+                    <p style={{ fontSize: "1.4rem", fontWeight: "bold", margin: "2px 0 0" }}>
+                      {(cropHealth.confidence * 100).toFixed(1)}%
+                    </p>
+                  </div>
+                </div>
+
+                {/* Healthy / Unhealthy probability bars */}
+                <div style={{ display: "flex", flexDirection: "column", gap: "6px", marginBottom: "14px" }}>
+                  {[
+                    { label: "Healthy", val: cropHealth.healthy_prob, color: "#4caf50" },
+                    { label: "Unhealthy", val: cropHealth.unhealthy_prob, color: "#f44336" },
+                  ].map(({ label, val, color }) => (
+                    <div key={label}>
+                      <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.85rem", marginBottom: "2px" }}>
+                        <span>{label}</span>
+                        <span>{(val * 100).toFixed(1)}%</span>
+                      </div>
+                      <div style={{ background: "#e0e0e0", borderRadius: "4px", height: "8px", overflow: "hidden" }}>
+                        <div style={{ width: `${val * 100}%`, background: color, height: "100%", borderRadius: "4px", transition: "width 0.5s" }} />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Satellite-estimated inputs */}
+                {cropHealth.estimated_inputs && (
+                  <details style={{ marginTop: "4px" }}>
+                    <summary style={{ cursor: "pointer", fontSize: "0.85rem", color: "#555", fontWeight: "bold" }}>
+                      Satellite-estimated inputs
+                    </summary>
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: "8px", marginTop: "8px" }}>
+                      {Object.entries(cropHealth.estimated_inputs).map(([k, v]) => (
+                        <div key={k} style={{ background: "rgba(255,255,255,0.6)", padding: "8px", borderRadius: "6px", textAlign: "center" }}>
+                          <div style={{ fontSize: "0.75rem", color: "#666" }}>{k.replace(/_/g, " ")}</div>
+                          <div style={{ fontWeight: "bold", fontSize: "1rem" }}>{String(v)}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </details>
+                )}
+              </div>
+            )}
           
           {/* Data Source */}
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
