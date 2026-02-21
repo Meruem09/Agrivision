@@ -17,7 +17,7 @@ const LandingPage: React.FC = () => {
                         <div className="bg-green-600 p-2 rounded-xl">
                             <Satellite className="h-6 w-6 text-white" />
                         </div>
-                        <span className="text-2xl font-bold text-gray-900">CropCare</span>
+                        <span className="text-2xl font-bold text-gray-900">AgriVision</span>
                     </div>
                     <button
                         onClick={() => navigate('/login')}
@@ -200,7 +200,7 @@ const LandingPage: React.FC = () => {
             {/* Features Section */}
             <div className="py-24 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
                 <div className="text-center mb-16">
-                    <h3 className="text-green-600 font-bold tracking-wider uppercase text-sm mb-2">Why Choose CropCare?</h3>
+                    <h3 className="text-green-600 font-bold tracking-wider uppercase text-sm mb-2">Why Choose AgriVision?</h3>
                     <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900">Empowering Farmers with Technology</h2>
                 </div>
 
@@ -244,7 +244,7 @@ const LandingPage: React.FC = () => {
             <div className="bg-gray-900 text-white py-20 px-4">
                 <div className="max-w-4xl mx-auto text-center">
                     <h2 className="text-3xl md:text-4xl font-bold mb-6">Ready to transform your farming?</h2>
-                    <p className="text-gray-400 text-lg mb-8">Join thousands of farmers using CropCare to make smarter decisions.</p>
+                    <p className="text-gray-400 text-lg mb-8">Join thousands of farmers using AgriVision to make smarter decisions.</p>
                     <button
                         onClick={() => navigate('/signup')}
                         className="px-10 py-4 bg-green-500 hover:bg-green-400 text-gray-900 rounded-full font-bold text-lg shadow-lg hover:shadow-green-500/20 transition-all transform hover:-translate-y-1"
@@ -261,7 +261,7 @@ const LandingPage: React.FC = () => {
                         <div className="bg-green-600 p-1.5 rounded-lg">
                             <Satellite className="h-5 w-5 text-white" />
                         </div>
-                        <span className="text-xl font-bold text-gray-900">CropCare</span>
+                        <span className="text-xl font-bold text-gray-900">AgriVision</span>
                     </div>
                     <div className="flex gap-6">
                         <a href="#" className="text-gray-400 hover:text-green-600 transition-colors">Privacy</a>

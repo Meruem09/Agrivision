@@ -40,7 +40,7 @@ const LoginPage: React.FC = () => {
           <div className="bg-green-600 p-2 rounded-lg">
             <Satellite className="h-6 w-6 text-white" />
           </div>
-          <span className="text-xl font-bold text-gray-900 tracking-tight">CropCare</span>
+          <span className="text-xl font-bold text-gray-900 tracking-tight">AgriVision</span>
         </div>
 
         <div className="mt-12">
@@ -70,7 +70,7 @@ const LoginPage: React.FC = () => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-green-600 focus:border-transparent transition-shadow bg-gray-50"
-                placeholder="example@CropCare.com"
+                placeholder="example@AgriVision.com"
                 required
               />
             </div>
@@ -156,7 +156,7 @@ const LoginPage: React.FC = () => {
         <div className="relative h-full w-full flex items-center justify-center">
           <img
             src="/images/farmer-login.png"
-            alt="AgriTech Illustration"
+            alt="AgriVision Illustration"
             className="max-w-full max-h-[80%] object-contain drop-shadow-xl hover:scale-105 transition-transform duration-500"
           />
         </div>

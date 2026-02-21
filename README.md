@@ -1,6 +1,6 @@
-# CropCare - Gujarat AgriTech Platform
+# AgriVision - Gujarat AgriVision Platform
 
-A comprehensive React-based AgriTech web application designed to empower farmers in Gujarat, India with satellite-based crop monitoring, real-time market intelligence, AI-powered advisory, and weather forecasting.
+A comprehensive React-based AgriVision web application designed to empower farmers in Gujarat, India with satellite-based crop monitoring, real-time market intelligence, AI-powered advisory, and weather forecasting.
 
 ## 🚀 Features
 
@@ -24,7 +24,7 @@ A comprehensive React-based AgriTech web application designed to empower farmers
 1. **Clone the repository**
    ```bash
    git clone <repository-url>
-   cd CropCare
+   cd AgriVision
    ```
 
 2. **Install dependencies**

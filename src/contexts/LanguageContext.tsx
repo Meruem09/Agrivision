@@ -11,7 +11,7 @@ interface LanguageContextType {
 const translations = {
   en: {
     // Header
-    'app.title': 'Gujarat AgriTech Platform',
+    'app.title': 'Gujarat AgriVision Platform',
     'nav.dashboard': 'Dashboard',
     'nav.map': 'Farm Map',
     'nav.alerts': 'Alerts',
@@ -30,7 +30,7 @@ const translations = {
     'common.search': 'Search',
 
     // Login
-    'login.title': 'Login to CropCare',
+    'login.title': 'Login to AgriVision',
     'login.subtitle': 'Welcome back, please enter your details.',
     'login.email': 'Email',
     'login.password': 'Password',
@@ -44,12 +44,12 @@ const translations = {
     'login.admin': 'Admin',
 
     // Landing Page
-    'landing.hero.title': 'CropCare',
+    'landing.hero.title': 'AgriVision',
     'landing.hero.subtitle': 'Precision Farming from Space to Your Fingertips',
     'landing.hero.description': 'Monitor crop health, receive real-time weather alerts, and access AI-driven advisory services to maximize your yield.',
     'landing.hero.cta.start': 'Get Started Now',
     'landing.hero.cta.demo': 'View Demo',
-    'landing.features.title': 'Why Choose CropCare?',
+    'landing.features.title': 'Why Choose AgriVision?',
     'landing.features.subtitle': 'Empowering Farmers with Technology',
     'landing.feature.satellite.title': 'Satellite Monitoring',
     'landing.feature.satellite.desc': 'Track vegetation health indices (NDVI, EVI) remotely using the latest Sentinel-2 satellite data.',
@@ -58,7 +58,7 @@ const translations = {
     'landing.feature.advisory.title': 'AI Advisory',
     'landing.feature.advisory.desc': 'Receive personalized pest alerts and farming advice powered by advanced AI algorithms.',
     'landing.cta.title': 'Ready to transform your farming?',
-    'landing.cta.subtitle': 'Join thousands of farmers using CropCare to make smarter decisions.',
+    'landing.cta.subtitle': 'Join thousands of farmers using AgriVision to make smarter decisions.',
     'landing.cta.button': 'Create Free Account',
     'landing.footer.privacy': 'Privacy',
     'landing.footer.terms': 'Terms',
@@ -614,7 +614,7 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const [language, setLanguage] = useState<Language>('en');
 
   useEffect(() => {
-    const savedLanguage = localStorage.getItem('agritech_language') as Language;
+    const savedLanguage = localStorage.getItem('AgriVision_language') as Language;
     if (savedLanguage && ['en', 'hi', 'gu'].includes(savedLanguage)) {
       setLanguage(savedLanguage);
     }
@@ -622,7 +622,7 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   const changeLanguage = (lang: Language) => {
     setLanguage(lang);
-    localStorage.setItem('agritech_language', lang);
+    localStorage.setItem('AgriVision_language', lang);
   };
 
   const t = (key: string, params?: Record<string, string | number>): string => {

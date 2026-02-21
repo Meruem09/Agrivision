@@ -1,7 +1,7 @@
-# CropCare - Gujarat AgriTech Platform (CropCare) - Project Overview
+# AgriVision - Gujarat AgriVision Platform (AgriVision) - Project Overview
 
 ## 1. Introduction
-**CropCare** (internally named "CropCare") is a comprehensive React-based AgriTech web application designed to empower farmers and agricultural advisors in Gujarat, India. The platform combines satellite-based crop monitoring, real-time market intelligence, AI-powered advisory, and weather forecasting to help farmers make data-driven decisions and maximize their yields.
+**AgriVision** (internally named "AgriVision") is a comprehensive React-based AgriVision web application designed to empower farmers and agricultural advisors in Gujarat, India. The platform combines satellite-based crop monitoring, real-time market intelligence, AI-powered advisory, and weather forecasting to help farmers make data-driven decisions and maximize their yields.
 
 ---
 
@@ -41,10 +41,10 @@
 ## 3. Project Structure
 
 ```
-c:/Projects/CropCare
+c:/Projects/AgriVision
 ├── src/
 │   ├── components/          # React Components (12 files)
-│   │   ├── LandingPage.tsx       # Public homepage with CropCare branding
+│   │   ├── LandingPage.tsx       # Public homepage with AgriVision branding
 │   │   ├── LoginPage.tsx         # Authentication
 │   │   ├── FarmerDashboard.tsx   # Farmer's main dashboard
 │   │   ├── AdminDashboard.tsx    # Admin overview
@@ -85,7 +85,7 @@ c:/Projects/CropCare
 
 ## 4. Major Features
 
-### 🏠 Landing Page (CropCare Branding)
+### 🏠 Landing Page (AgriVision Branding)
 **File**: `LandingPage.tsx`
 
 - **Custom SVG Illustrations**: Hand-drawn farmer characters (male/female) with traditional attire
@@ -421,4 +421,4 @@ VITE_GEMINI_API_KEY=your_google_ai_studio_key
 
 **Last Updated**: January 31, 2026  
 **Version**: 2.0 (Major Feature Update)  
-**Maintainer**: CropCare Development Team
+**Maintainer**: AgriVision Development Team

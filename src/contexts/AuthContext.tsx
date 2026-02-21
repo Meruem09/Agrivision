@@ -61,7 +61,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     // Check for stored user session
-    const storedUser = localStorage.getItem('agritech_user');
+    const storedUser = localStorage.getItem('AgriVision_user');
     if (storedUser) {
       setUser(JSON.parse(storedUser));
     }
@@ -78,7 +78,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const mockUser = mockUsers[email as keyof typeof mockUsers];
     if (mockUser && password === 'demo123') {
       setUser(mockUser);
-      localStorage.setItem('agritech_user', JSON.stringify(mockUser));
+      localStorage.setItem('AgriVision_user', JSON.stringify(mockUser));
       setLoading(false);
       return true;
     }
@@ -102,7 +102,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       };
 
       setUser(newUser);
-      localStorage.setItem('agritech_user', JSON.stringify(newUser));
+      localStorage.setItem('AgriVision_user', JSON.stringify(newUser));
       setLoading(false);
       return true;
     }
@@ -113,7 +113,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const logout = () => {
     setUser(null);
-    localStorage.removeItem('agritech_user');
+    localStorage.removeItem('AgriVision_user');
   };
 
   return (
