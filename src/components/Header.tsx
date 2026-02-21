@@ -14,11 +14,7 @@ const Header: React.FC = () => {
   if (!user) return null;
 
   const navItems = [
-    { path: '/', label: t('nav.dashboard') },
-    { path: '/map', label: t('nav.map') },
-    { path: '/alerts', label: t('nav.alerts') },
-    { path: '/marketplace', label: t('nav.marketplace') },
-    { path: '/advisory', label: t('nav.advisory') }
+    { path: '/', label: t('nav.map') },
   ];
 
   const languages = [
@@ -78,19 +74,6 @@ const Header: React.FC = () => {
                 ))}
               </div>
             </div>
-
-            {/* Notifications */}
-            <Link
-              to="/alerts"
-              className="relative p-2 text-gray-600 hover:text-green-600 transition-colors"
-            >
-              <Bell className="h-5 w-5" />
-              {unreadCount > 0 && (
-                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                  {unreadCount}
-                </span>
-              )}
-            </Link>
 
             {/* User Menu */}
             <div className="flex items-center space-x-3">

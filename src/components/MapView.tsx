@@ -51,6 +51,12 @@ const MapView = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [mapCenter, setMapCenter] = useState<[number, number]>([23.022, 72.572]);
   const [isUserLocation, setIsUserLocation] = useState(false);
+  const [coords, setCoords] = useState<any[]>([]);
+  const [indexInfo, setIndices] = useState<any>(null);
+  const [healthStatus, setHealthStatus] = useState<string>("");
+  const [healthyRange, setHealthyRange] = useState<string>("");
+  const [loading, setLoading] = useState(false);
+  const [cropType, setCropType] = useState<string>("wheat");
 
   useEffect(() => {
     if (navigator.geolocation) {
@@ -159,38 +165,6 @@ const MapView = () => {
     return (area / 10000).toFixed(2); // Convert to hectares
   };
 
-  // Handle shape creation
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const handleCreated = (e: any) => {
-    const { layer, layerType } = e;
-    const shapeId = `shape-${Date.now()}`;
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let coordinates: any = [];
-    if (layerType === 'rectangle' || layerType === 'polygon') {
-      coordinates = layer.getLatLngs()[0].map((latlng: L.LatLng) => [latlng.lat, latlng.lng]);
-    } else if (layerType === 'circle') {
-      const center = layer.getLatLng();
-      coordinates = [[center.lat, center.lng], layer.getRadius()];
-    }
-
-    const area = calculateArea(layer);
-
-    const newShape = {
-      id: shapeId,
-      type: layerType,
-      coordinates,
-      area,
-      layer: layer,
-      avgNdvi: (Math.random() * 0.5 + 0.3).toFixed(2),
-      avgEvi: (Math.random() * 0.5 + 0.25).toFixed(2),
-      avgNdmi: (Math.random() * 0.4 + 0.2).toFixed(2),
-    };
-
-    setDrawnShapes(prev => [...prev, newShape]);
-    setSelectedArea(newShape);
-  };
-
   // Handle shape edit
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleEdited = (e: any) => {
@@ -259,6 +233,48 @@ const MapView = () => {
     link.download = 'selected-areas.json';
     link.click();
   };
+
+  const handleCreated = (e: any) => {
+  const { layer, layerType } = e;
+  const shapeId = `shape-${Date.now()}`;
+
+  let coordinates: any = [];
+  let backendPolygon: any = [];
+
+  if (layerType === 'rectangle' || layerType === 'polygon') {
+
+    const latlngs = layer.getLatLngs()[0];
+
+    // frontend display coords
+    coordinates = latlngs.map((pt: L.LatLng) => [pt.lat, pt.lng]);
+
+    // backend coords (GeoJSON format)
+    backendPolygon = latlngs.map((pt: L.LatLng) => [pt.lng, pt.lat]);
+
+    setCoords([backendPolygon]);
+  }
+
+  const area = calculateArea(layer);
+
+  const newShape = {
+    id: shapeId,
+    type: layerType,
+    coordinates,
+    area,
+    layer: layer,
+    avgNdvi: "-",
+    avgEvi: "-",
+    avgNdmi: "-",
+  };
+
+  setDrawnShapes(prev => [...prev, newShape]);
+  setSelectedArea(newShape);
+
+  // store selected layer for styling later
+  if (featureGroupRef.current) {
+    featureGroupRef.current.selectedLayer = layer;
+  }
+};
 
   // Generate comprehensive report
   const generateReport = () => {
@@ -529,138 +545,87 @@ const MapView = () => {
     }
   };
 
-  const getIndexInfo = (index) => {
-    switch (index) {
-      case 'ndvi':
-        return {
-          name: 'NDVI (Normalized Difference Vegetation Index)',
-          description: 'Measures vegetation health and density',
-          range: '0.0 - 1.0',
-          healthy: '> 0.7',
-          warning: '0.5 - 0.7',
-          critical: '< 0.5'
-        };
-      case 'evi':
-        return {
-          name: 'EVI (Enhanced Vegetation Index)',
-          description: 'Enhanced vegetation health with atmospheric correction',
-          range: '0.0 - 1.0',
-          healthy: '> 0.6',
-          warning: '0.4 - 0.6',
-          critical: '< 0.4'
-        };
-      case 'ndmi':
-        return {
-          name: 'NDMI (Normalized Difference Moisture Index)',
-          description: 'Measures vegetation water content',
-          range: '0.0 - 1.0',
-          healthy: '> 0.4',
-          warning: '0.3 - 0.4',
-          critical: '< 0.3'
-        };
-      default:
-        return null;
+  const analyzeFarm = async () => {
+    if (!coords.length) return alert("Please draw a farm boundary first!");
+
+    setLoading(true);
+
+    try {
+      const res = await fetch("http://127.0.0.1:5000/analyze-farm", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          coordinates: coords,
+          crop_type: cropType
+        }),
+      });
+
+      const data = await res.json();
+
+      if (data.error) {
+        alert(data.error);
+        return;
+      }
+
+      setIndices(data.indices);
+      setHealthStatus(data.health_status);
+      setHealthyRange(data.healthy_range);
+
+      // 🎨 COLOR LOGIC
+      const health = data.health_status || "Unknown";
+      let color = "gray";
+
+      if (health.includes("Healthy")) color = "green";
+      else if (health.includes("Moderate")) color = "yellow";
+      else if (health.includes("Unhealthy") || health.includes("stress")) color = "red";
+      else if (health.includes("Bare")) color = "brown";
+
+      const selectedLayer = featureGroupRef.current?.selectedLayer;
+
+      if (selectedLayer && selectedLayer.setStyle) {
+        selectedLayer.setStyle({
+          color,
+          fillColor: color,
+          fillOpacity: 0.35,
+          weight: 2
+        });
+      }
+
+      // 🧠 update selected shape with REAL satellite values
+      setDrawnShapes(prev =>
+        prev.map(shape =>
+          shape.layer === selectedLayer
+            ? {
+                ...shape,
+                avgNdvi: data.indices.NDVI?.toFixed(2) || "-",
+                avgEvi: data.indices.EVI?.toFixed(2) || "-",
+                avgNdmi: data.indices.MSI?.toFixed(2) || "-"
+              }
+            : shape
+        )
+      );
+
+    } catch (err) {
+      console.error(err);
+      alert("Error connecting to backend!");
+    } finally {
+      setLoading(false);
     }
   };
-
-  const indexInfo = getIndexInfo(selectedIndex);
 
   return (
     <div className="space-y-6 p-6 bg-gray-50 min-h-screen">
       {/* Header */}
       <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
         <h1 className="text-2xl font-bold text-gray-800 mb-4">{t('map.title')}</h1>
-
-        <div className="mb-6">
-          <form onSubmit={handleSearch} className="relative">
-            <input
-              type="text"
-              placeholder="Search location..."
-              className="w-full pl-10 pr-24 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-            <Search className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
-            <button
-              type="submit"
-              className="absolute right-2 top-1.5 px-3 py-1 bg-blue-500 text-white rounded-md text-sm hover:bg-blue-600 transition-colors"
-            >
-              Search
-            </button>
-          </form>
-        </div>
-
         {/* Controls */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {/* Index Selector */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              {t('map.index.label')}
-            </label>
-            <div className="flex space-x-2">
-              {['ndvi', 'evi', 'ndmi'].map((index) => (
-                <button
-                  key={index}
-                  onClick={() => setSelectedIndex(index)}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${selectedIndex === index
-                    ? 'bg-blue-500 text-white'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                    }`}
-                >
-                  {index.toUpperCase()}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Date Selector */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              {t('map.date.label')}
-            </label>
-            <div className="flex space-x-2">
-              <div className="relative flex-grow">
-                <input
-                  type="date"
-                  value={selectedDate}
-                  onChange={(e) => {
-                    setSelectedDate(e.target.value);
-                    setIsLatest(false);
-                  }}
-                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${isLatest ? 'border-gray-200 text-gray-400 bg-gray-50' : 'border-gray-300 text-gray-900'
-                    }`}
-                />
-              </div>
-              <button
-                onClick={() => {
-                  setIsLatest(true);
-                  setSelectedDate(new Date().toISOString().split('T')[0]);
-                }}
-                className={`px-3 py-2 rounded-lg transition-colors flex items-center justify-center ${isLatest
-                  ? 'bg-blue-500 text-white'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                  }`}
-                title="Latest Available"
-              >
-                <Clock className="w-5 h-5" />
-              </button>
-            </div>
-            <div className="mt-1 flex items-center text-xs text-gray-500">
-              <Info className="w-3 h-3 mr-1" />
-              {isLatest
-                ? "Showing most recent available cloud-free data"
-                : `Showing data approx. around ${selectedDate}`}
-            </div>
-          </div>
+          
         </div>
 
         {/* Drawing Tools */}
         <div className="mt-4 pt-4 border-t border-gray-200">
           <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <Square className="h-5 w-5 text-blue-500" />
-              <span className="font-medium text-gray-700">{t('map.tools.label')}</span>
-            </div>
             <div className="flex items-center space-x-2">
               <button
                 onClick={() => setDrawingEnabled(!drawingEnabled)}
@@ -672,21 +637,11 @@ const MapView = () => {
                 {drawingEnabled ? t('map.tools.enabled') : t('map.tools.enable')}
               </button>
               <button
-                onClick={generateReport}
-                className="px-4 py-2 rounded-lg text-sm font-medium bg-green-600 text-white hover:bg-green-700 flex items-center space-x-2"
+                onClick={analyzeFarm}
+                className="px-4 py-2 rounded-lg text-sm font-medium bg-purple-600 text-white hover:bg-purple-700"
               >
-                <FileText className="h-4 w-4" />
-                <span>{t('map.tools.report')}</span>
+                {loading ? "Analyzing..." : "Analyze Crop Health"}
               </button>
-              {drawnShapes.length > 0 && (
-                <button
-                  onClick={exportCoordinates}
-                  className="px-4 py-2 rounded-lg text-sm font-medium bg-blue-500 text-white hover:bg-blue-600 flex items-center space-x-2"
-                >
-                  <Download className="h-4 w-4" />
-                  <span>{t('map.tools.export')}</span>
-                </button>
-              )}
             </div>
           </div>
           <p className="text-xs text-gray-500 mt-2">
@@ -784,64 +739,6 @@ const MapView = () => {
 
         {/* Sidebar */}
         <div className="space-y-6">
-          {/* Selected Area Info */}
-          {selectedArea && (
-            <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center space-x-2">
-                  <Square className="h-4 w-4 text-green-600" />
-                  <h3 className="font-medium text-green-800">{t('map.selected.title')}</h3>
-                </div>
-                <button
-                  onClick={() => deleteShape(selectedArea.id)}
-                  className="text-red-600 hover:text-red-700"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </button>
-              </div>
-              <div className="text-sm text-green-700 space-y-3">
-                <div className="flex justify-between border-b border-green-200 pb-1">
-                  <span className="font-medium">Type:</span>
-                  <span className="capitalize">{selectedArea.type}</span>
-                </div>
-                <div className="flex justify-between border-b border-green-200 pb-1">
-                  <span className="font-medium">Area:</span>
-                  <span>{selectedArea.area} ha</span>
-                </div>
-
-                <div>
-                  <div className="flex justify-between">
-                    <span className="font-medium">Avg NDVI:</span>
-                    <span>{selectedArea.avgNdvi}</span>
-                  </div>
-                  <p className="text-xs text-green-600 mt-1 italic">
-                    {t(getInterpretationKey('ndvi', parseFloat(selectedArea.avgNdvi)))}
-                  </p>
-                </div>
-
-                <div>
-                  <div className="flex justify-between">
-                    <span className="font-medium">Avg EVI:</span>
-                    <span>{selectedArea.avgEvi}</span>
-                  </div>
-                  <p className="text-xs text-green-600 mt-1 italic">
-                    {t(getInterpretationKey('evi', parseFloat(selectedArea.avgEvi)))}
-                  </p>
-                </div>
-
-                <div>
-                  <div className="flex justify-between">
-                    <span className="font-medium">Avg NDMI:</span>
-                    <span>{selectedArea.avgNdmi}</span>
-                  </div>
-                  <p className="text-xs text-green-600 mt-1 italic">
-                    {t(getInterpretationKey('ndmi', parseFloat(selectedArea.avgNdmi)))}
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
-
           {/* Drawn Shapes List */}
           {drawnShapes.length > 0 && (
             <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
@@ -882,69 +779,38 @@ const MapView = () => {
           {/* Index Information */}
           {indexInfo && (
             <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
-              <div className="flex items-center space-x-2 mb-3">
-                <Info className="h-5 w-5 text-blue-500" />
-                <h3 className="font-semibold text-gray-800">{t('map.index.info')}</h3>
+              <h3 className="font-semibold text-gray-800 mb-4">
+                Vegetation & Moisture Indices
+              </h3>
+
+              <div className="grid grid-cols-2 gap-3">
+                {Object.entries(indexInfo).map(([key, value]) => (
+                  <div
+                    key={key}
+                    className="bg-gray-50 rounded-lg p-3 text-center"
+                  >
+                    <p className="text-xs text-gray-500">{key}</p>
+                    <p className="text-lg font-bold text-gray-800">
+                      {String(value)}
+                    </p>
+                  </div>
+                ))}
               </div>
 
-              <div className="space-y-3">
-                <div>
-                  <h4 className="font-medium text-sm text-gray-800">{indexInfo.name}</h4>
-                  <p className="text-xs text-gray-600 mt-1">{indexInfo.description}</p>
+              {healthyRange && (
+                <div className="mt-4 text-sm text-yellow-700 bg-yellow-50 p-3 rounded">
+                  <strong>Healthy Range ({cropType}):</strong> {healthyRange}
                 </div>
+              )}
 
-                <div className="text-sm">
-                  <div className="flex justify-between py-1">
-                    <span className="text-gray-600">Range:</span>
-                    <span className="font-medium">{indexInfo.range}</span>
-                  </div>
-                  <div className="flex justify-between py-1">
-                    <span className="text-green-600">Healthy:</span>
-                    <span className="font-medium">{indexInfo.healthy}</span>
-                  </div>
-                  <div className="flex justify-between py-1">
-                    <span className="text-yellow-600">Warning:</span>
-                    <span className="font-medium">{indexInfo.warning}</span>
-                  </div>
-                  <div className="flex justify-between py-1">
-                    <span className="text-red-600">Critical:</span>
-                    <span className="font-medium">{indexInfo.critical}</span>
-                  </div>
+              {healthStatus && (
+                <div className="mt-3 text-sm text-gray-700">
+                  <strong>Status:</strong> {healthStatus}
                 </div>
-              </div>
+              )}
             </div>
           )}
-
-          {/* Field Summary */}
-          <div className="bg-white rounded-lg p-6 shadow-sm border border-gray-200">
-            <h3 className="font-semibold text-gray-800 mb-4">{t('map.summary')}</h3>
-            <div className="space-y-3">
-              {farmFields.map((field) => (
-                <div key={field.id} className="p-3 bg-gray-50 rounded-lg">
-                  <div className="flex items-center justify-between mb-2">
-                    <h4 className="font-medium text-sm text-gray-800">{field.name}</h4>
-                    <div
-                      className="w-4 h-4 rounded-full"
-                      style={{ backgroundColor: getFieldColor(field) }}
-                    ></div>
-                  </div>
-                  <div className="text-xs text-gray-600 space-y-1">
-                    <div className="flex justify-between">
-                      <span>Area:</span>
-                      <span>{field.area}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>{selectedIndex.toUpperCase()}:</span>
-                      <span className="font-medium">
-                        {(field.indices as Record<string, number>)[selectedIndex].toFixed(2)}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
+          
           {/* Data Source */}
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
             <div className="flex items-center space-x-2 mb-2">

@@ -28,11 +28,7 @@ function AppRouter() {
       <main className={hideHeader ? "" : "container mx-auto px-4 py-6"}>
         <Routes>
           <Route path="/login" element={!user ? <LoginPage /> : <Navigate to="/" replace />} />
-          <Route path="/" element={user ? (user.role === 'admin' ? <AdminDashboard /> : <FarmerDashboard />) : <LandingPage />} />
-          <Route path="/map" element={user ? <MapView /> : <Navigate to="/login" replace />} />
-          <Route path="/alerts" element={user ? <AlertsPage /> : <Navigate to="/login" replace />} />
-          <Route path="/marketplace" element={user ? <MarketPlace /> : <Navigate to="/login" replace />} />
-          <Route path="/advisory" element={user ? <Advisory /> : <Navigate to="/login" replace />} />
+          <Route path="/" element={user ? <MapView /> : <Navigate to="/login" replace />} />
         </Routes>
       </main>
     </div>
