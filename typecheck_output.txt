@@ -1,0 +1,28 @@
+
+> Agrivision@0.0.0 typecheck
+> tsc --noEmit -p tsconfig.app.json
+
+src/App.tsx(9,1): error TS6133: 'MarketPlace' is declared but its value is never read.
+src/components/MapView.tsx(2,49): error TS6133: 'Polygon' is declared but its value is never read.
+src/components/MapView.tsx(4,10): error TS6133: 'Info' is declared but its value is never read.
+src/components/MapView.tsx(4,26): error TS6133: 'Square' is declared but its value is never read.
+src/components/MapView.tsx(4,42): error TS6133: 'Download' is declared but its value is never read.
+src/components/MapView.tsx(4,52): error TS6133: 'FileText' is declared but its value is never read.
+src/components/MapView.tsx(4,62): error TS6133: 'Search' is declared but its value is never read.
+src/components/MapView.tsx(4,70): error TS6133: 'Clock' is declared but its value is never read.
+src/components/MapView.tsx(45,25): error TS6133: 'setSelectedIndex' is declared but its value is never read.
+src/components/MapView.tsx(46,24): error TS6133: 'setSelectedDate' is declared but its value is never read.
+src/components/MapView.tsx(47,20): error TS6133: 'setIsLatest' is declared but its value is never read.
+src/components/MapView.tsx(51,23): error TS6133: 'setSearchQuery' is declared but its value is never read.
+src/components/MapView.tsx(59,20): error TS6133: 'setCropType' is declared but its value is never read.
+src/components/MapView.tsx(76,9): error TS6133: 'handleSearch' is declared but its value is never read.
+src/components/MapView.tsx(215,9): error TS6133: 'exportCoordinates' is declared but its value is never read.
+src/components/MapView.tsx(280,9): error TS6133: 'generateReport' is declared but its value is never read.
+src/components/MapView.tsx(522,9): error TS6133: 'getFieldColor' is declared but its value is never read.
+src/components/MapView.tsx(724,21): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(props: EditControlProps): EditControl', gave the following error.
+    Type '{ position: "topleft"; onCreated: (e: any) => void; onEdited: (e: any) => void; onDeleted: (e: any) => void; draw: { rectangle: boolean; polygon: boolean; circle: boolean; polyline: false; marker: false; circlemarker: false; }; edit: { ...; }; }' is not assignable to type 'IntrinsicAttributes & IntrinsicClassAttributes<EditControl> & Readonly<EditControlProps>'.
+      Property 'edit' does not exist on type 'IntrinsicAttributes & IntrinsicClassAttributes<EditControl> & Readonly<EditControlProps>'.
+  Overload 2 of 2, '(props: EditControlProps, context: any): EditControl', gave the following error.
+    Type '{ position: "topleft"; onCreated: (e: any) => void; onEdited: (e: any) => void; onDeleted: (e: any) => void; draw: { rectangle: boolean; polygon: boolean; circle: boolean; polyline: false; marker: false; circlemarker: false; }; edit: { ...; }; }' is not assignable to type 'IntrinsicAttributes & IntrinsicClassAttributes<EditControl> & Readonly<EditControlProps>'.
+      Property 'edit' does not exist on type 'IntrinsicAttributes & IntrinsicClassAttributes<EditControl> & Readonly<EditControlProps>'.
